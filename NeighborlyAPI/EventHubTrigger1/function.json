@@ -5,8 +5,8 @@
       "type": "eventHubTrigger",
       "name": "events",
       "direction": "in",
-      "eventHubName": "samples-workitems",
-      "connection": "AzureWebJobsStorage",
+      "eventHubName": "myneighborlyeventhub",
+      "connection": "eventHubConnection",
       "cardinality": "many",
       "consumerGroup": "$Default",
       "dataType": "binary"
