@@ -1,0 +1,207 @@
+data:
+  AzureWebJobsStorage: RGVmYXVsdEVuZHBvaW50c1Byb3RvY29sPWh0dHBzO0FjY291bnROYW1lPW15bmVpZ2hib3JseXN0b3JhZ2VhY2M7QWNjb3VudEtleT1oUWdQT01qbUptbGZBcXkrNjhhT293QnJyYU5yM1orZVo0NytEQjdPVXUxdnlmZEVnOTdncy91THcvWnNYSlZ3YlpoMDNjOUhOcFd4L0M1VWROc0k3QT09O0VuZHBvaW50U3VmZml4PWNvcmUud2luZG93cy5uZXQ=
+  FUNCTIONS_WORKER_RUNTIME: cHl0aG9u
+  FUNCTIONS_EXTENSION_VERSION: fjM=
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myneighborlycluster
+---
+data:
+  host.master: Ti94WXNxNDdWeHFGT0wwcWFhMWREak1GazdvSnpkeTZHTFpRRHBtNkZxSlBUcFNGbTJTNVlnPT0=
+  host.function.default: eTMzL0RuNnRsZzZQYXF1NjZEYVpxRWJ0UURWSVhtWi9Dekw3ckdmMWFhL1o2bVlwWHNjSnl3PT0=
+  host.systemKey.default: M2ZleXJBT0lSc2lwRXlieC9OQVFyaG9rNUVJcjl2Tk5uWVZHc05ScnQ4SVhjL2tWTTJiYXF3PT0=
+  functions.createadvertisement.default: N2dFbVBPTk9QUjF6clZ6TkxsSkp1WlRLSWIxOWpOM2xOcmFBNkM4S2VPcmlrRTl3aFE1U1VnPT0=
+  functions.deleteadvertisement.default: SnVPRXRLYzRjN1l1VEYyU0RFUi9mYUhOMk9lcERLZUdacjZsT2tSbVdITUZaem16UDlEQkNnPT0=
+  functions.getadvertisement.default: UDVHMmQ3Sm5za09WZ2NiTVYwcjN6OXV4dG5FYWtoNll2SEdJbkZjdEZHOEpIUHZoMlJjVnFnPT0=
+  functions.getadvertisements.default: WGhjMi84WFhWZ2hNdFo1dE5GL01URmNuNFZMSlhOT2lQdEJndFpmUXlqSjlhWm5GdDdPbGJBPT0=
+  functions.getpost.default: UjVVOTI4aFhLZ1ltald0TkhvVG9BZHQzV0NzeDNybVZsSDVTbE9EYXF4Q0xLQllEOG9hTEx3PT0=
+  functions.getposts.default: WEowNERMeEc1bXdJMm11U21mWVplSnJ4bWcvT3dJN2RkOEdzTGVkeVJ1UU8vNXcxTGxUNXl3PT0=
+  functions.updateadvertisement.default: dzhZYTZOL1B2OXFlcHVYNE45NGFvU09CTDFhSTNuNlJIUlg5N0F0d2FmVkVWQW9qRFdyeWZnPT0=
+apiVersion: v1
+kind: Secret
+metadata:
+  name: func-keys-kube-secret-myneighborlycluster
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: myneighborlycluster-function-keys-identity-svc-act
+---
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  - configMaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: functions-keys-manager-role
+---
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: functions-keys-manager-role
+subjects:
+- kind: ServiceAccount
+  name: myneighborlycluster-function-keys-identity-svc-act
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: myneighborlycluster-function-keys-identity-svc-act-functions-keys-manager-rolebinding
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myneighborlycluster-http
+spec:
+  selector:
+    app: myneighborlycluster-http
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myneighborlycluster-http
+  labels:
+    app: myneighborlycluster-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myneighborlycluster-http
+  template:
+    metadata:
+      labels:
+        app: myneighborlycluster-http
+    spec:
+      containers:
+      - name: myneighborlycluster-http
+        image: myneighborlyconregistry.azurecr.io/myneighborlyfinalimage:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: createAdvertisement
+        - name: AzureFunctionsJobHost__functions__1
+          value: deleteAdvertisement
+        - name: AzureFunctionsJobHost__functions__2
+          value: getAdvertisement
+        - name: AzureFunctionsJobHost__functions__3
+          value: getAdvertisements
+        - name: AzureFunctionsJobHost__functions__4
+          value: getPost
+        - name: AzureFunctionsJobHost__functions__5
+          value: getPosts
+        - name: AzureFunctionsJobHost__functions__6
+          value: updateAdvertisement
+        - name: AzureWebJobsSecretStorageType
+          value: kubernetes
+        - name: AzureWebJobsKubernetesSecretName
+          value: secrets/func-keys-kube-secret-myneighborlycluster
+        envFrom:
+        - secretRef:
+            name: myneighborlycluster
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        startupProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+      serviceAccountName: myneighborlycluster-function-keys-identity-svc-act
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myneighborlycluster
+  labels:
+    app: myneighborlycluster
+spec:
+  selector:
+    matchLabels:
+      app: myneighborlycluster
+  template:
+    metadata:
+      labels:
+        app: myneighborlycluster
+    spec:
+      containers:
+      - name: myneighborlycluster
+        image: myneighborlyconregistry.azurecr.io/myneighborlyfinalimage:v1
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: EventHubTrigger1
+        - name: AzureFunctionsJobHost__functions__1
+          value: eventHubTrigger
+        envFrom:
+        - secretRef:
+            name: myneighborlycluster
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        startupProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+      serviceAccountName: myneighborlycluster-function-keys-identity-svc-act
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: myneighborlycluster
+  labels: {}
+spec:
+  scaleTargetRef:
+    name: myneighborlycluster
+  triggers:
+  - type: azure-eventhub
+    metadata:
+      direction: in
+      eventHubName: samples-workitems
+      cardinality: many
+      consumerGroup: $Default
+      dataType: binary
+      connectionFromEnv: AzureWebJobsStorage
+  - type: eventgridtrigger
+    metadata:
+      direction: in
+      eventHubName: testhub
+      connection: Endpoint=sb://udacityneighborly.servicebus.windows.net/;SharedAccessKeyName=allpolicy;SharedAccessKey=LOxUOkN13xN038T1VoSsmaTt4s7vq/+VCzduS5/nH9A=;EntityPath=testhub
+---
+

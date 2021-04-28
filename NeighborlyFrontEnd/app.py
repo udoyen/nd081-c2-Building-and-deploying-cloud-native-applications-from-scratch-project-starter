@@ -68,6 +68,7 @@ def home():
 
     ads = response.json()
     posts = response2.json()
+    # print(f"ads: {ads}") #TODO: Remove
     return render_template("index.html", ads=ads, posts=posts)
 
 

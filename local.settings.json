@@ -5,5 +5,5 @@
   },
   "ConnectionStrings": {},
 
-  "AzureWebJobsStorage": ""
+  "AzureWebJobsStorage": "UseDevelopmentStorage=true"
 }
